@@ -78,6 +78,10 @@ class AppState extends ChangeNotifier {
     await _db.deleteItem(item.id);
     final cat = _categoryOf(item);
     cat?.items.remove(item);
+    // Renumber so sort_order stays gap-free — otherwise a later addItem()
+    // (which assigns sortOrder = items.length) can collide with an existing
+    // item's sort_order, leaving order unstable across reloads.
+    if (cat != null) await _renumberItems(cat);
     notifyListeners();
   }
 
@@ -133,6 +137,11 @@ class AppState extends ChangeNotifier {
   Future<void> deleteCategory(Category cat) async {
     await _db.deleteCategory(cat.id); // items cascade
     categories.remove(cat);
+    // Renumber so sort_order stays gap-free — same reasoning as deleteItem.
+    for (var i = 0; i < categories.length; i++) {
+      categories[i].sortOrder = i;
+    }
+    await _db.updateCategoryOrder(categories);
     notifyListeners();
   }
 

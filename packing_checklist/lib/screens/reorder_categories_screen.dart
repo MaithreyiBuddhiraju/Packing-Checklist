@@ -27,7 +27,8 @@ class ReorderCategoriesScreen extends StatelessWidget {
               leading: Text(cat.emoji, style: const TextStyle(fontSize: 21)),
               title: Text(cat.name,
                   style: const TextStyle(fontWeight: FontWeight.w700)),
-              subtitle: Text('${cat.items.length} items'),
+              subtitle: Text(
+                  '${cat.items.length} item${cat.items.length == 1 ? '' : 's'}'),
               trailing: ReorderableDragStartListener(
                 index: i,
                 child: const Icon(Icons.drag_indicator),

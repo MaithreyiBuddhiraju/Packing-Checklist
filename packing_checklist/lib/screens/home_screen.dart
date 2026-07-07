@@ -82,8 +82,10 @@ class HomeScreen extends StatelessWidget {
           : ListView.builder(
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 88),
               itemCount: app.categories.length,
-              itemBuilder: (_, i) =>
-                  CategoryCard(category: app.categories[i]),
+              itemBuilder: (_, i) => CategoryCard(
+                key: ValueKey('category-${app.categories[i].id}'),
+                category: app.categories[i],
+              ),
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => showCategorySheet(context),
