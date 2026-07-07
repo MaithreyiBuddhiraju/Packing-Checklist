@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+
+# Flutter/Dart (project-level ignores live in packing_checklist/.gitignore too)
+**/build/
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Secrets — never commit
+.env
+*.keystore
+*.jks
+key.properties

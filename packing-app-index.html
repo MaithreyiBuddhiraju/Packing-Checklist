@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Trip Packing">
+  <meta name="theme-color" content="#1B2B3B">
+  <meta name="description" content="Interactive packing checklist for SF & LA road trip · July 2026">
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json">
+
+  <!-- Apple touch icon (for iOS "Add to Home Screen") -->
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+
+  <title>SF &amp; LA Packing ✈️</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #F5F0E8;
+      color: #1B2B3B;
+      overscroll-behavior: none;
+    }
+
+    /* ── FIXED HEADER ── */
+    .header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: linear-gradient(160deg, #1B2B3B 0%, #2D4A6E 100%);
+      color: white;
+      padding-top: env(safe-area-inset-top);
+    }
+    .header-inner { padding: 14px 18px 0; }
+    .header-title { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
+    .header-sub { font-size: 11px; opacity: 0.6; margin-top: 2px; }
+
+    .progress-wrap { padding: 10px 18px 0; }
+    .progress-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+    .progress-label { font-size: 11px; opacity: 0.75; }
+    .progress-pct { font-size: 17px; font-weight: 900; line-height: 1; }
+    .progress-track { height: 6px; background: rgba(255,255,255,0.18); border-radius: 3px; overflow: hidden; }
+    .progress-fill {
+      height: 100%; border-radius: 3px;
+      background: linear-gradient(90deg, #5B8DB8, #6B9E7E, #E8865A);
+      transition: width 0.4s cubic-bezier(.4,0,.2,1);
+    }
+
+    .filter-row {
+      display: flex; gap: 7px; padding: 9px 18px 11px;
+      overflow-x: auto; scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .filter-row::-webkit-scrollbar { display: none; }
+    .chip {
+      padding: 6px 15px; border-radius: 20px; border: none;
+      font-size: 12px; font-weight: 700; cursor: pointer;
+      white-space: nowrap; touch-action: manipulation;
+      transition: all 0.18s; flex-shrink: 0;
+    }
+    .chip-all  { background: #F5EDE0; color: #3B2B1B; }
+    .chip-sf   { background: #5B8DB8; color: #fff; }
+    .chip-la   { background: #E8865A; color: #fff; }
+    .chip-both { background: #6B9E7E; color: #fff; }
+    .chip-dim  { background: rgba(255,255,255,0.13); color: rgba(255,255,255,0.65); }
+
+    /* ── MAIN ── */
+    .main {
+      padding-bottom: calc(72px + env(safe-area-inset-bottom));
+      min-height: 100vh;
+    }
+    .tab-pane { display: none; padding: 14px 14px 4px; }
+    .tab-pane.active { display: block; }
+
+    /* ── WEATHER PILLS ── */
+    .weather-row { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 12px; }
+    .w-pill { border-radius: 20px; padding: 6px 13px; font-size: 11px; font-weight: 600; }
+    .w-sf { background: #E8F2FB; color: #1F5C8A; border: 1px solid #B0CDE8; }
+    .w-la { background: #FEF0E6; color: #9B4B1A; border: 1px solid #EDC4A5; }
+
+    /* ── ACTIONS ── */
+    .actions-row { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 12px; }
+    .act-btn {
+      font-size: 12px; font-weight: 700; padding: 6px 13px;
+      border-radius: 8px; border: 1.5px solid; cursor: pointer; touch-action: manipulation;
+    }
+    .act-primary { color: #2D4A6E; border-color: #2D4A6E; background: none; }
+    .act-clear   { color: #7A6E65; border-color: #C4BAB0; background: none; }
+
+    /* ── CATEGORY CARD ── */
+    .cat-card {
+      background: #fff; border-radius: 14px; margin-bottom: 11px;
+      overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    }
+    .cat-head {
+      display: flex; align-items: center; padding: 13px 15px; gap: 10px;
+      cursor: pointer; touch-action: manipulation; user-select: none;
+      transition: background 0.15s;
+    }
+    .cat-head:active { background: #F9F4EE; }
+    .cat-emoji { font-size: 21px; flex-shrink: 0; }
+    .cat-text { flex: 1; min-width: 0; }
+    .cat-title { font-size: 14px; font-weight: 700; }
+    .cat-note  { font-size: 11px; color: #8A7E75; margin-top: 1px; }
+    .cat-badge {
+      font-size: 11px; font-weight: 800; padding: 3px 9px;
+      border-radius: 10px; flex-shrink: 0;
+    }
+    .badge-done { background: #DCF2E4; color: #2A7A48; }
+    .badge-todo { background: #EEE6DA; color: #7A6558; }
+    .cat-chev {
+      font-size: 10px; color: #B0A898; flex-shrink: 0;
+      transition: transform 0.2s; margin-left: 2px;
+    }
+    .chev-open { transform: rotate(180deg); }
+
+    /* ── ITEMS ── */
+    .cat-body { display: none; border-top: 1px solid #F0E8DE; }
+    .cat-body.open { display: block; }
+
+    .list-item {
+      display: flex; align-items: flex-start; padding: 12px 15px;
+      gap: 11px; cursor: pointer; touch-action: manipulation;
+      user-select: none; border-bottom: 1px solid #FAF3EC;
+      transition: background 0.12s;
+    }
+    .list-item:last-child { border-bottom: none; }
+    .list-item:active { background: #F7F2EC; }
+    .list-item.is-checked { background: #F7FBF8; }
+
+    .cb-box {
+      width: 24px; height: 24px; border-radius: 7px;
+      border: 2px solid #C4BAB0; flex-shrink: 0; margin-top: 1px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.18s;
+    }
+    .cb-box.on { background: #6B9E7E; border-color: #6B9E7E; }
+    .cb-tick { color: #fff; font-size: 13px; font-weight: 900; display: none; }
+    .cb-box.on .cb-tick { display: block; }
+
+    .item-body { flex: 1; min-width: 0; }
+    .item-name { font-size: 14px; font-weight: 500; line-height: 1.4; transition: color 0.15s; }
+    .item-name.struck { color: #B0A898; text-decoration: line-through; }
+    .item-tip { font-size: 12px; color: #8A7E75; margin-top: 4px; line-height: 1.5; }
+
+    .loc-badge {
+      font-size: 10px; font-weight: 800; color: #fff;
+      padding: 3px 8px; border-radius: 9px; flex-shrink: 0; margin-top: 3px;
+    }
+    .loc-sf   { background: #5B8DB8; }
+    .loc-la   { background: #E8865A; }
+    .loc-both { background: #6B9E7E; }
+
+    /* ── COMPLETE BANNER ── */
+    .complete-banner {
+      display: none; background: #DCF2E4; border: 1px solid #A8DFC0;
+      border-radius: 12px; padding: 13px 16px; margin-bottom: 12px; text-align: center;
+    }
+    .complete-banner.show { display: block; }
+    .complete-banner p { font-size: 14px; font-weight: 700; color: #2A7A48; }
+    .complete-banner span { font-size: 12px; color: #3D8A56; }
+
+    /* ── BOTTOM NAV ── */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+      display: flex; background: #fff;
+      border-top: 1px solid #EAE0D5;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .nav-btn {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      padding: 9px 0 7px; border: none; background: none;
+      cursor: pointer; touch-action: manipulation;
+    }
+    .nav-icon { font-size: 22px; line-height: 1; }
+    .nav-lbl  { font-size: 10px; font-weight: 700; margin-top: 3px; }
+    .nav-btn.on  .nav-lbl { color: #2D4A6E; }
+    .nav-btn.off .nav-lbl { color: #B0A898; }
+    .nav-btn.off .nav-icon { opacity: 0.45; }
+    .nav-indicator {
+      width: 24px; height: 3px; border-radius: 2px; margin: 0 auto 2px;
+      background: #2D4A6E; opacity: 0; transition: opacity 0.2s;
+    }
+    .nav-btn.on .nav-indicator { opacity: 1; }
+
+    /* ── OUTFIT TAB ── */
+    .outfit-intro { font-size: 13px; color: #6A6060; line-height: 1.65; margin-bottom: 14px; }
+    .phase-card {
+      background: #fff; border-radius: 14px; margin-bottom: 15px;
+      overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    }
+    .phase-head { padding: 15px 17px; color: #fff; }
+    .phase-name    { font-size: 16px; font-weight: 800; }
+    .phase-dates   { font-size: 12px; opacity: 0.9; margin-top: 3px; }
+    .phase-weather { font-size: 11px; opacity: 0.78; margin-top: 5px; }
+
+    .outfit-block { padding: 14px 17px; border-bottom: 1px solid #F0E8DE; }
+    .outfit-block:last-child { border-bottom: none; }
+    .outfit-name { font-size: 13px; font-weight: 700; margin-bottom: 9px; }
+    .piece-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .piece-tag {
+      background: #F5EFE8; border: 1px solid #E6D9CC;
+      border-radius: 7px; padding: 5px 10px; font-size: 12px; color: #4A3F38;
+    }
+    .outfit-tip {
+      background: #F8F4EF; border-radius: 9px; padding: 10px 13px;
+      font-size: 12px; color: #5A5049; line-height: 1.6; border-left: 3px solid #ccc;
+    }
+
+    .fog-card {
+      background: #EBF3FC; border-radius: 12px; padding: 13px 16px;
+      border: 1px solid #C0D9EF; margin-top: 6px;
+    }
+    .fog-title { font-size: 13px; font-weight: 800; color: #1E4A70; margin-bottom: 7px; }
+    .fog-body  { font-size: 12px; color: #2A4A65; line-height: 1.65; }
+  </style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<header class="header" id="appHeader">
+  <div class="header-inner">
+    <div class="header-title">SF &amp; LA Road Trip ✈️</div>
+    <div class="header-sub">July 2–12, 2026 · BUF → SFO → LA → SFO → BUF</div>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-row">
+      <span class="progress-label" id="progLabel">0 of 0 items packed</span>
+      <span class="progress-pct" id="progPct">0%</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progFill" style="width:0%"></div>
+    </div>
+  </div>
+  <div class="filter-row">
+    <button class="chip chip-all" data-f="All"  onclick="setFilter(this)">All items</button>
+    <button class="chip chip-dim" data-f="SF"   onclick="setFilter(this)">🌁 SF only</button>
+    <button class="chip chip-dim" data-f="LA"   onclick="setFilter(this)">☀️ LA only</button>
+    <button class="chip chip-dim" data-f="Both" onclick="setFilter(this)">SF + LA</button>
+  </div>
+</header>
+
+<!-- ═══ MAIN ═══ -->
+<main class="main" id="appMain">
+
+  <!-- PACKING TAB -->
+  <div class="tab-pane active" id="pane-pack">
+    <div class="weather-row">
+      <span class="w-pill w-sf">🌫️ SF: 63–70°F days · 53–58°F nights</span>
+      <span class="w-pill w-la">☀️ LA: 81–85°F days · 62–66°F nights</span>
+    </div>
+    <div class="complete-banner" id="completeBanner">
+      <p>🎉 All packed!</p>
+      <span>Time to enjoy California ✨</span>
+    </div>
+    <div class="actions-row">
+      <button class="act-btn act-primary" onclick="checkAllVisible()">Check all</button>
+      <button class="act-btn act-clear"   onclick="clearChecked()">Clear</button>
+    </div>
+    <div id="catList"></div>
+  </div>
+
+  <!-- OUTFIT TAB -->
+  <div class="tab-pane" id="pane-outfit">
+    <p class="outfit-intro">Your Buffalo jackets and cardigans are the stars of this trip. SF in July is deceptively cool; LA is pure summer. Here's how to dress for each phase.</p>
+    <div id="outfitList"></div>
+    <div class="fog-card">
+      <div class="fog-title">🌁 The SF Fog Rule</div>
+      <div class="fog-body">SF in July is "Karl the Fog" season. Mornings start at 55–58°F with a marine layer before clearing by early afternoon. Always carry a layer — even if it feels mild at 11 AM. The Golden Gate Bridge, Ocean Beach, and the waterfront are significantly windier than inland neighborhoods like the Mission or Hayes Valley.</div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ═══ BOTTOM NAV ═══ -->
+<nav class="bottom-nav">
+  <button class="nav-btn on" id="nav-pack" onclick="setTab('pack')">
+    <div class="nav-indicator"></div>
+    <span class="nav-icon">📦</span>
+    <span class="nav-lbl">Packing List</span>
+  </button>
+  <button class="nav-btn off" id="nav-outfit" onclick="setTab('outfit')">
+    <div class="nav-indicator"></div>
+    <span class="nav-icon">👗</span>
+    <span class="nav-lbl">Outfit Ideas</span>
+  </button>
+</nav>
+
+<script>
+// ══════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════
+const CATS = [
+  {
+    id:'layers', icon:'🧥', title:'Layers & Outerwear',
+    note:"SF's non-negotiable — never leave without one",
+    items:[
+      {id:'j1', label:'Lightweight jacket #1', loc:'Both', tip:'Your Buffalo jacket is ideal — SF evenings hit 53°F and feel breezy'},
+      {id:'j2', label:'Lightweight jacket #2', loc:'SF',   tip:'Great backup; doubles for airport & restaurant AC'},
+      {id:'c1', label:'Light cardigan #1',     loc:'Both', tip:'LA evenings (~64°F) + WFH indoor layer in SF'},
+      {id:'c2', label:'Light cardigan #2',     loc:'SF',   tip:'SF fog can linger well past midday'},
+      {id:'sw', label:'Long-sleeve lightweight sweater', loc:'SF', tip:'WFH staple + foggy SF morning layer'},
+    ]
+  },
+  {
+    id:'tops', icon:'👚', title:'Tops',
+    note:'Casual + one nicer piece covers all plans',
+    items:[
+      {id:'t1', label:'Lightweight blouse or tee #1', loc:'Both'},
+      {id:'t2', label:'Lightweight blouse or tee #2', loc:'Both'},
+      {id:'t3', label:'Lightweight blouse or tee #3', loc:'Both'},
+      {id:'t4', label:'Nicer blouse for evenings out', loc:'Both'},
+      {id:'t5', label:'Casual long-sleeve top', loc:'SF', tip:'WFH layer or SF exploration base'},
+    ]
+  },
+  {
+    id:'bottoms', icon:'👖', title:'Bottoms',
+    note:'SF is genuinely jeans weather in July',
+    items:[
+      {id:'b1', label:'Jeans #1',                    loc:'SF', tip:'SF stays in the 60s — jeans are the right call'},
+      {id:'b2', label:'Jeans or casual trousers #2', loc:'SF'},
+      {id:'b3', label:'Light pants or casual shorts', loc:'LA', tip:'LA hits 82–85°F — lightweight fabric wins'},
+    ]
+  },
+  {
+    id:'dresses', icon:'👗', title:'Dresses',
+    note:'LA calling card — SF-ready with a jacket over them',
+    items:[
+      {id:'d1', label:'Summer dress #1', loc:'Both', tip:'Jacket on in SF afternoons, free-floating in LA'},
+      {id:'d2', label:'Summer dress #2', loc:'Both', tip:'Mix, match, and layer across both cities'},
+    ]
+  },
+  {
+    id:'shoes', icon:'👟', title:'Shoes',
+    note:'Comfort first — SF has serious hills',
+    items:[
+      {id:'s1', label:'Comfortable walking shoes / sneakers', loc:'Both', tip:'MVPs of the trip — road trip + city walks + SF hills'},
+      {id:'s2', label:'Sandals or slip-ons',                  loc:'LA',   tip:'Beach walks and outdoor dining in LA'},
+      {id:'s3', label:'Dressier flats or low heels',          loc:'Both', tip:'Evenings out in both cities'},
+    ]
+  },
+  {
+    id:'accessories', icon:'🕶️', title:'Accessories',
+    note:'CA sun is intense even through SF fog',
+    items:[
+      {id:'a1', label:'Sunglasses',           loc:'Both', tip:'Non-negotiable — CA UV is strong year-round'},
+      {id:'a2', label:'Light scarf or wrap',  loc:'SF',   tip:'SF wind + fog barrier; doubles as a style element'},
+      {id:'a3', label:'Day bag / crossbody',  loc:'Both'},
+      {id:'a4', label:'Small evening clutch', loc:'Both'},
+      {id:'a5', label:'Sun hat or cap',       loc:'LA',   tip:'LA at 85°F — head coverage genuinely matters'},
+    ]
+  },
+  {
+    id:'sleep', icon:'😴', title:'Sleepwear & Undergarments',
+    note:'10–11 days — pack enough to forget about laundry',
+    items:[
+      {id:'sl1', label:'Pajamas / sleepwear — set 1',  loc:'Both'},
+      {id:'sl2', label:'Pajamas / sleepwear — set 2',  loc:'Both'},
+      {id:'un',  label:'Underwear × 11',               loc:'Both'},
+      {id:'br1', label:'Regular bra #1',               loc:'Both'},
+      {id:'br2', label:'Regular bra #2',               loc:'Both'},
+      {id:'br3', label:'Strapless or convertible bra', loc:'Both', tip:'Essential for your summer dresses'},
+      {id:'sk',  label:'Socks × 5–6 pairs',            loc:'Both'},
+    ]
+  },
+  {
+    id:'beauty', icon:'🧴', title:'Toiletries & Skincare',
+    note:'SPF is the most important beauty item on this trip',
+    items:[
+      {id:'spf', label:'SPF 50 sunscreen',            loc:'Both', tip:"CA UV is deceptively strong — even SF's overcast days carry it"},
+      {id:'lip', label:'SPF lip balm',                loc:'Both'},
+      {id:'sk2', label:'Travel-size skincare routine', loc:'Both'},
+      {id:'fnd', label:'NARS Foundation — Stromboli', loc:'Both', tip:'Your golden-olive go-to; performs beautifully in CA daylight'},
+      {id:'mkp', label:'Full makeup essentials kit',   loc:'Both'},
+      {id:'tlt', label:'Travel toiletries kit',        loc:'Both'},
+    ]
+  },
+  {
+    id:'tech', icon:'🔌', title:'Electronics & Extras',
+    note:'WFH week means laptop is as essential as the suitcase',
+    items:[
+      {id:'e1', label:'Phone charger',                   loc:'Both'},
+      {id:'e2', label:'Laptop + charger',                loc:'SF',   tip:'Working from home Jul 7–11'},
+      {id:'e3', label:'Dyson Airwrap — carry-on only ✓', loc:'Both', tip:'TSA-approved in carry-on (corded, no lithium battery). Do not check it — too valuable.'},
+      {id:'e4', label:'Earbuds / headphones',            loc:'Both'},
+      {id:'e5', label:'Portable power bank',             loc:'Both'},
+      {id:'e6', label:'Books or e-reader',               loc:'Both', tip:'Evening fiction wind-down — Conan Doyle for SF energy 🔍'},
+      {id:'e7', label:'Reusable water bottle',           loc:'Both'},
+      {id:'e8', label:'Small first-aid kit',             loc:'Both'},
+      {id:'e9', label:'Road trip snacks 🍫',             loc:'LA',   tip:'SF → LA is ~6 hrs — chocolate favorites are mandatory'},
+    ]
+  },
+];
+
+const OUTFITS = [
+  {
+    phase:'✈️ Arrival in SF', dates:'July 2',
+    weather:'~65°F landing · drops to ~55°F by evening', bg:'#1E3A5F',
+    looks:[
+      { name:'Travel Comfort Look',
+        pieces:['Lightweight blouse or tee','Jeans','Lightweight jacket'],
+        tip:"Wear your jacket on the plane — SF evenings feel notably chilly after Buffalo's July heat. Put it on before leaving the airport, not after.",
+        color:'#1E3A5F' }
+    ]
+  },
+  {
+    phase:'🚗 Road Trip: SF → LA', dates:'July 3–6',
+    weather:'SF 65°F → Central CA 80°F+ → LA 82–85°F', bg:'#3D6B52',
+    looks:[
+      { name:'Leaving SF',
+        pieces:['Summer dress OR jeans + top','Jacket (removable)','Sneakers'],
+        tip:"Start layered out of SF and peel off as you drive south. By Central CA you'll appreciate the breathable dress option.",
+        color:'#3D6B52' },
+      { name:'LA Days (Jul 4–6)',
+        pieces:['Summer dress','Sandals','Light cardigan for evenings'],
+        tip:'LA evenings are a gorgeous ~64°F — just a cardigan needed. Perfect for 4th of July outdoor celebrations.',
+        color:'#3D6B52' },
+      { name:'LA Evenings Out',
+        pieces:['Summer dress','Dressier flats','Lightweight jacket or cardigan'],
+        tip:"Flats step it up for nicer dinners. LA in July feels like the whole city is having a party.",
+        color:'#3D6B52' }
+    ]
+  },
+  {
+    phase:'🏠 WFH Week in SF', dates:'July 7–11',
+    weather:'~63–68°F days · ~53–55°F evenings · breezy', bg:'#2B4F80',
+    looks:[
+      { name:'Work-from-Home Days',
+        pieces:['Cardigan or long-sleeve sweater','Jeans or casual trousers','Cozy indoor shoes'],
+        tip:'SF rooms and cafés run cool. Your sweater or cardigan will be the most-worn item of the WFH week.',
+        color:'#2B4F80' },
+      { name:'SF Evening Exploring',
+        pieces:['Jeans','Nice blouse','Lightweight jacket'],
+        tip:"SF evenings are the coldest point of the trip — Embarcadero and Fisherman's Wharf are breezy and beautiful. Never leave without your jacket.",
+        color:'#2B4F80' },
+      { name:'SF Afternoon Outing',
+        pieces:['Summer dress','Lightweight jacket','Sneakers or flats'],
+        tip:'SF afternoons (2–5 PM) can warm to a lovely 66–68°F. Dress + jacket is the classic SF tourist formula — and it works.',
+        color:'#2B4F80' }
+    ]
+  },
+  {
+    phase:'✈️ Flying Home', dates:'July 12',
+    weather:'SF morning: ~60–63°F', bg:'#3B3055',
+    looks:[
+      { name:'Airport Travel Look',
+        pieces:['Comfortable jeans','Casual top','Lightweight jacket'],
+        tip:"Airport AC is aggressive and you'll land back in Buffalo. Jacket on the plane and you're perfectly set for both ends of the flight.",
+        color:'#3B3055' }
+    ]
+  }
+];
+
+// ══════════════════════════════════════════
+//  STATE  (persisted in localStorage)
+// ══════════════════════════════════════════
+let checked  = {};
+let collapsed = {};
+let curFilter = 'All';
+
+function load() {
+  try {
+    const c = localStorage.getItem('mtp_checked');
+    const k = localStorage.getItem('mtp_collapsed');
+    if (c) checked   = JSON.parse(c);
+    if (k) collapsed  = JSON.parse(k);
+  } catch(e) {}
+}
+function save() {
+  try {
+    localStorage.setItem('mtp_checked',   JSON.stringify(checked));
+    localStorage.setItem('mtp_collapsed', JSON.stringify(collapsed));
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════
+function visible(loc) {
+  if (curFilter === 'All')  return true;
+  if (curFilter === 'Both') return loc === 'Both';
+  return loc === curFilter || loc === 'Both';
+}
+
+const chipActiveClass = { All:'chip-all', SF:'chip-sf', LA:'chip-la', Both:'chip-both' };
+
+// ══════════════════════════════════════════
+//  FILTER
+// ══════════════════════════════════════════
+function setFilter(btn) {
+  curFilter = btn.dataset.f;
+  document.querySelectorAll('.chip').forEach(c => {
+    c.className = 'chip ' + (c.dataset.f === curFilter ? chipActiveClass[c.dataset.f] : 'chip-dim');
+  });
+  renderCats();
+  updateProgress();
+}
+
+// ══════════════════════════════════════════
+//  TAB
+// ══════════════════════════════════════════
+function setTab(t) {
+  document.getElementById('pane-pack').classList.toggle('active',   t === 'pack');
+  document.getElementById('pane-outfit').classList.toggle('active', t === 'outfit');
+  ['pack','outfit'].forEach(id => {
+    document.getElementById('nav-'+id).className = 'nav-btn ' + (id === t ? 'on' : 'off');
+  });
+}
+
+// ══════════════════════════════════════════
+//  TOGGLE ITEM  (DOM-patch, no re-render)
+// ══════════════════════════════════════════
+function toggleItem(id) {
+  checked[id] = !checked[id];
+  save();
+  const el  = document.querySelector(`[data-iid="${id}"]`);
+  const on  = checked[id];
+  el.classList.toggle('is-checked', on);
+  el.querySelector('.cb-box').classList.toggle('on', on);
+  el.querySelector('.item-name').classList.toggle('struck', on);
+  const tip = el.querySelector('.item-tip');
+  if (tip) tip.style.display = on ? 'none' : '';
+  updateBadge(el.closest('.cat-card').dataset.cid);
+  updateProgress();
+}
+
+// ══════════════════════════════════════════
+//  TOGGLE CATEGORY
+// ══════════════════════════════════════════
+function toggleCat(id) {
+  collapsed[id] = !collapsed[id];
+  save();
+  const isOpen = !collapsed[id];
+  document.getElementById('body-'+id).classList.toggle('open', isOpen);
+  document.getElementById('chev-'+id).classList.toggle('chev-open', isOpen);
+}
+
+// ══════════════════════════════════════════
+//  BULK ACTIONS
+// ══════════════════════════════════════════
+function checkAllVisible() {
+  CATS.forEach(cat => cat.items.filter(i => visible(i.loc)).forEach(i => { checked[i.id] = true; }));
+  save(); renderCats(); updateProgress();
+}
+function clearChecked() {
+  checked = {}; save(); renderCats(); updateProgress();
+}
+
+// ══════════════════════════════════════════
+//  BADGE UPDATE
+// ══════════════════════════════════════════
+function updateBadge(catId) {
+  const cat = CATS.find(c => c.id === catId);
+  if (!cat) return;
+  const vis  = cat.items.filter(i => visible(i.loc));
+  const done = vis.filter(i => checked[i.id]).length;
+  const all  = done === vis.length;
+  const bdg  = document.getElementById('bdg-'+catId);
+  if (bdg) { bdg.textContent = done+'/'+vis.length; bdg.className = 'cat-badge '+(all?'badge-done':'badge-todo'); }
+  const head = document.getElementById('head-'+catId);
+  if (head) {
+    head.style.background = all ? '#F0FAF4' : '';
+    head.querySelector('.cat-title').textContent = cat.title + (all ? ' ✓' : '');
+  }
+}
+
+// ══════════════════════════════════════════
+//  PROGRESS
+// ══════════════════════════════════════════
+function updateProgress() {
+  let tot = 0, done = 0;
+  CATS.forEach(cat => cat.items.filter(i => visible(i.loc)).forEach(i => { tot++; if (checked[i.id]) done++; }));
+  const pct = tot ? Math.round(done/tot*100) : 0;
+  document.getElementById('progPct').textContent  = pct === 100 ? '🎉' : pct+'%';
+  document.getElementById('progLabel').textContent = done+' of '+tot+' items packed';
+  document.getElementById('progFill').style.width  = pct+'%';
+  document.getElementById('completeBanner').classList.toggle('show', pct === 100);
+}
+
+// ══════════════════════════════════════════
+//  RENDER CATEGORIES
+// ══════════════════════════════════════════
+function locBadge(loc) {
+  const cls = loc==='SF'?'loc-sf':loc==='LA'?'loc-la':'loc-both';
+  return `<span class="loc-badge ${cls}">${loc==='Both'?'SF+LA':loc}</span>`;
+}
+
+function renderCats() {
+  let html = '';
+  CATS.forEach(cat => {
+    const vis  = cat.items.filter(i => visible(i.loc));
+    if (!vis.length) return;
+    const done = vis.filter(i => checked[i.id]).length;
+    const all  = done === vis.length;
+    const open = !collapsed[cat.id];
+    html += `
+      <div class="cat-card" data-cid="${cat.id}">
+        <div class="cat-head" id="head-${cat.id}" onclick="toggleCat('${cat.id}')" style="background:${all?'#F0FAF4':''}">
+          <span class="cat-emoji">${cat.icon}</span>
+          <div class="cat-text">
+            <div class="cat-title">${cat.title}${all?' ✓':''}</div>
+            <div class="cat-note">${cat.note}</div>
+          </div>
+          <span class="cat-badge ${all?'badge-done':'badge-todo'}" id="bdg-${cat.id}">${done}/${vis.length}</span>
+          <span class="cat-chev ${open?'chev-open':''}" id="chev-${cat.id}">▼</span>
+        </div>
+        <div class="cat-body ${open?'open':''}" id="body-${cat.id}">`;
+    vis.forEach(item => {
+      const on = !!checked[item.id];
+      html += `
+          <div class="list-item${on?' is-checked':''}" data-iid="${item.id}" onclick="toggleItem('${item.id}')">
+            <div class="cb-box${on?' on':''}"><span class="cb-tick">✓</span></div>
+            <div class="item-body">
+              <div class="item-name${on?' struck':''}">${item.label}</div>
+              ${item.tip?`<div class="item-tip" style="display:${on?'none':''}">💡 ${item.tip}</div>`:''}
+            </div>
+            ${locBadge(item.loc)}
+          </div>`;
+    });
+    html += `</div></div>`;
+  });
+  document.getElementById('catList').innerHTML = html;
+}
+
+// ══════════════════════════════════════════
+//  RENDER OUTFITS
+// ══════════════════════════════════════════
+function renderOutfits() {
+  let html = '';
+  OUTFITS.forEach(phase => {
+    html += `<div class="phase-card">
+      <div class="phase-head" style="background:${phase.bg}">
+        <div class="phase-name">${phase.phase}</div>
+        <div class="phase-dates">${phase.dates}</div>
+        <div class="phase-weather">🌡️ ${phase.weather}</div>
+      </div>`;
+    phase.looks.forEach((look, i) => {
+      const last = i === phase.looks.length - 1;
+      html += `<div class="outfit-block" style="${last?'border-bottom:none':''}">
+        <div class="outfit-name">${look.name}</div>
+        <div class="piece-row">${look.pieces.map(p=>`<span class="piece-tag">${p}</span>`).join('')}</div>
+        <div class="outfit-tip" style="border-left-color:${look.color}">${look.tip}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+  document.getElementById('outfitList').innerHTML = html;
+}
+
+// ══════════════════════════════════════════
+//  LAYOUT — push content below fixed header
+// ══════════════════════════════════════════
+function fitLayout() {
+  const h = document.getElementById('appHeader').offsetHeight;
+  document.getElementById('appMain').style.paddingTop = (h + 4) + 'px';
+}
+
+// ══════════════════════════════════════════
+//  SERVICE WORKER REGISTRATION
+// ══════════════════════════════════════════
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+load();
+renderCats();
+renderOutfits();
+updateProgress();
+fitLayout();
+window.addEventListener('resize', fitLayout);
+</script>
+</body>
+</html>
