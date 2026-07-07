@@ -140,6 +140,11 @@ class DatabaseHelper {
     await db.delete('categories', where: 'id = ?', whereArgs: [id]);
   }
 
+  Future<void> setAllCollapsed(bool collapsed) async {
+    final db = await database;
+    await db.update('categories', {'collapsed': collapsed ? 1 : 0});
+  }
+
   Future<void> updateCategoryOrder(List<Category> cats) async {
     final db = await database;
     final batch = db.batch();

@@ -150,7 +150,11 @@ class _QtyStepper extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     return InkWell(
-      onTap: enabled ? onTap : null,
+      // Even when disabled, keep a no-op onTap (not null) so this InkWell
+      // still claims the gesture — otherwise a null onTap drops out of the
+      // gesture arena and the tap falls through to the row's outer InkWell,
+      // which toggles the item as packed.
+      onTap: enabled ? onTap : () {},
       borderRadius: BorderRadius.circular(14),
       child: Padding(
         padding: const EdgeInsets.all(6),

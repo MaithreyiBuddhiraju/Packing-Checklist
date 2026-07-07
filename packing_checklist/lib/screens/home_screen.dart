@@ -25,6 +25,14 @@ class HomeScreen extends StatelessWidget {
         title: const Text('Packing Checklist',
             style: TextStyle(fontWeight: FontWeight.w800)),
         actions: [
+          IconButton(
+            icon: Icon(
+                app.allCollapsed ? Icons.unfold_more : Icons.unfold_less),
+            tooltip: app.allCollapsed ? 'Expand all' : 'Collapse all',
+            onPressed: app.categories.isEmpty
+                ? null
+                : () => app.toggleCollapseAll(),
+          ),
           PopupMenuButton<_MenuAction>(
             onSelected: (action) => _onMenu(context, action),
             itemBuilder: (_) => const [

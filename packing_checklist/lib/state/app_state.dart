@@ -134,6 +134,18 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool get allCollapsed =>
+      categories.isNotEmpty && categories.every((c) => c.collapsed);
+
+  Future<void> toggleCollapseAll() async {
+    final collapse = !allCollapsed;
+    await _db.setAllCollapsed(collapse);
+    for (final c in categories) {
+      c.collapsed = collapse;
+    }
+    notifyListeners();
+  }
+
   Future<void> reorderCategories(int oldIndex, int newIndex) async {
     final cat = categories.removeAt(oldIndex);
     categories.insert(newIndex, cat);
