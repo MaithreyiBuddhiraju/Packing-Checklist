@@ -208,6 +208,41 @@ Future<void> showQuantityDialog(BuildContext context, Item item) {
   );
 }
 
+/// Direct-edit dialog for the trip name shown under the app bar title.
+Future<void> showTripNameDialog(BuildContext context, String currentName) {
+  final app = context.read<AppState>();
+  final ctl = TextEditingController(text: currentName);
+
+  return showDialog(
+    context: context,
+    builder: (ctx) {
+      void submit() {
+        app.setTripName(ctl.text.trim());
+        Navigator.pop(ctx);
+      }
+
+      return AlertDialog(
+        title: const Text('Trip name'),
+        content: TextField(
+          controller: ctl,
+          autofocus: true,
+          textCapitalization: TextCapitalization.words,
+          decoration: const InputDecoration(
+            hintText: 'e.g. Japan trip',
+            border: OutlineInputBorder(),
+          ),
+          onSubmitted: (_) => submit(),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          FilledButton(onPressed: submit, child: const Text('Save')),
+        ],
+      );
+    },
+  );
+}
+
 /// Long-press actions for a category header: edit or delete.
 Future<void> showCategoryActions(BuildContext context, Category category) {
   final app = context.read<AppState>();

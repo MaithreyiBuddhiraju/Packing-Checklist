@@ -17,7 +17,7 @@ class DatabaseHelper {
     final path = join(await getDatabasesPath(), 'packing_checklist.db');
     return openDatabase(
       path,
-      version: 2,
+      version: 3,
       // sqflite ships with foreign keys OFF; cascade deletes depend on this.
       onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
       onCreate: _onCreate,
@@ -27,6 +27,16 @@ class DatabaseHelper {
           const where = "tag IN ('SF', 'LA', 'Both')";
           await db.update('items', {'tag': null}, where: where);
           await db.update('template_items', {'tag': null}, where: where);
+        }
+        if (oldVersion < 3) {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS trip (
+              id   INTEGER PRIMARY KEY CHECK (id = 1),
+              name TEXT NOT NULL DEFAULT ''
+            )
+          ''');
+          await db.insert('trip', {'id': 1, 'name': ''},
+              conflictAlgorithm: ConflictAlgorithm.ignore);
         }
       },
     );
@@ -71,6 +81,13 @@ class DatabaseHelper {
         tag         TEXT
       )
     ''');
+    await db.execute('''
+      CREATE TABLE trip (
+        id   INTEGER PRIMARY KEY CHECK (id = 1),
+        name TEXT NOT NULL DEFAULT ''
+      )
+    ''');
+    await db.insert('trip', {'id': 1, 'name': ''});
 
     // Seed the active checklist AND the template, so "Reset from template"
     // works before the user ever saves one. (onCreate already runs inside a
@@ -115,6 +132,19 @@ class DatabaseHelper {
       byId[item.categoryId]?.items.add(item);
     }
     return cats;
+  }
+
+  // ── Trip ──────────────────────────────────────────────────────────
+
+  Future<String> getTripName() async {
+    final db = await database;
+    final rows = await db.query('trip', where: 'id = 1', limit: 1);
+    return rows.isEmpty ? '' : (rows.first['name'] as String? ?? '');
+  }
+
+  Future<void> setTripName(String name) async {
+    final db = await database;
+    await db.update('trip', {'name': name}, where: 'id = 1');
   }
 
   // ── Categories ────────────────────────────────────────────────────

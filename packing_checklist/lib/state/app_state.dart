@@ -11,6 +11,7 @@ class AppState extends ChangeNotifier {
 
   List<Category> categories = [];
   bool loaded = false;
+  String tripName = '';
 
   int get totalItems => categories.fold(0, (s, c) => s + c.items.length);
   int get packedItems => categories.fold(0, (s, c) => s + c.packedCount);
@@ -18,7 +19,14 @@ class AppState extends ChangeNotifier {
 
   Future<void> load() async {
     categories = await _db.loadAll();
+    tripName = await _db.getTripName();
     loaded = true;
+    notifyListeners();
+  }
+
+  Future<void> setTripName(String name) async {
+    tripName = name.trim();
+    await _db.setTripName(tripName);
     notifyListeners();
   }
 

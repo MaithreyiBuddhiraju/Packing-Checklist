@@ -22,8 +22,15 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Packing Checklist',
-            style: TextStyle(fontWeight: FontWeight.w800)),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Packing Checklist',
+                style: TextStyle(fontWeight: FontWeight.w800)),
+            _TripNameField(app: app),
+          ],
+        ),
         actions: [
           IconButton(
             icon: Icon(
@@ -160,6 +167,42 @@ class HomeScreen extends StatelessWidget {
       ),
     );
     return result == true;
+  }
+}
+
+/// Tappable trip name shown under the "Packing Checklist" heading.
+class _TripNameField extends StatelessWidget {
+  final AppState app;
+  const _TripNameField({required this.app});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasName = app.tripName.isNotEmpty;
+    return InkWell(
+      onTap: () => showTripNameDialog(context, app.tripName),
+      child: Padding(
+        padding: const EdgeInsets.only(top: 2),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(
+                hasName ? app.tripName : 'Add trip name',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  fontStyle: hasName ? FontStyle.normal : FontStyle.italic,
+                  color: Colors.white70,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 4),
+            const Icon(Icons.edit, size: 12, color: Colors.white54),
+          ],
+        ),
+      ),
+    );
   }
 }
 
