@@ -1,6 +1,6 @@
 // Seed data carried over from the original web app (packing-app/index.html).
-// Numbered duplicates ("jacket #1/#2") are collapsed into quantities; the
-// SF/LA/Both location markers become freeform, editable tags.
+// Numbered duplicates ("jacket #1/#2") are collapsed into quantities.
+// Items ship untagged — tags are a freeform per-trip label the user adds.
 
 class SeedItem {
   final String name;
@@ -18,58 +18,58 @@ class SeedCategory {
 
 const List<SeedCategory> seedCategories = [
   SeedCategory('Layers & Outerwear', '🧥', [
-    SeedItem('Lightweight jacket', qty: 2, tag: 'Both'),
-    SeedItem('Light cardigan', qty: 2, tag: 'Both'),
-    SeedItem('Long-sleeve lightweight sweater', tag: 'SF'),
+    SeedItem('Lightweight jacket', qty: 2),
+    SeedItem('Light cardigan', qty: 2),
+    SeedItem('Long-sleeve lightweight sweater'),
   ]),
   SeedCategory('Tops', '👚', [
-    SeedItem('Lightweight blouse or tee', qty: 3, tag: 'Both'),
-    SeedItem('Nicer blouse for evenings out', tag: 'Both'),
-    SeedItem('Casual long-sleeve top', tag: 'SF'),
+    SeedItem('Lightweight blouse or tee', qty: 3),
+    SeedItem('Nicer blouse for evenings out'),
+    SeedItem('Casual long-sleeve top'),
   ]),
   SeedCategory('Bottoms', '👖', [
-    SeedItem('Jeans', qty: 2, tag: 'SF'),
-    SeedItem('Light pants or casual shorts', tag: 'LA'),
+    SeedItem('Jeans', qty: 2),
+    SeedItem('Light pants or casual shorts'),
   ]),
   SeedCategory('Dresses', '👗', [
-    SeedItem('Summer dress', qty: 2, tag: 'Both'),
+    SeedItem('Summer dress', qty: 2),
   ]),
   SeedCategory('Shoes', '👟', [
-    SeedItem('Comfortable walking shoes / sneakers', tag: 'Both'),
-    SeedItem('Sandals or slip-ons', tag: 'LA'),
-    SeedItem('Dressier flats or low heels', tag: 'Both'),
+    SeedItem('Comfortable walking shoes / sneakers'),
+    SeedItem('Sandals or slip-ons'),
+    SeedItem('Dressier flats or low heels'),
   ]),
   SeedCategory('Accessories', '🕶️', [
-    SeedItem('Sunglasses', tag: 'Both'),
-    SeedItem('Light scarf or wrap', tag: 'SF'),
-    SeedItem('Day bag / crossbody', tag: 'Both'),
-    SeedItem('Small evening clutch', tag: 'Both'),
-    SeedItem('Sun hat or cap', tag: 'LA'),
+    SeedItem('Sunglasses'),
+    SeedItem('Light scarf or wrap'),
+    SeedItem('Day bag / crossbody'),
+    SeedItem('Small evening clutch'),
+    SeedItem('Sun hat or cap'),
   ]),
   SeedCategory('Sleepwear & Undergarments', '😴', [
-    SeedItem('Pajamas / sleepwear', qty: 2, tag: 'Both'),
-    SeedItem('Underwear', qty: 11, tag: 'Both'),
-    SeedItem('Regular bra', qty: 2, tag: 'Both'),
-    SeedItem('Strapless or convertible bra', tag: 'Both'),
-    SeedItem('Socks', qty: 6, tag: 'Both'),
+    SeedItem('Pajamas / sleepwear', qty: 2),
+    SeedItem('Underwear', qty: 11),
+    SeedItem('Regular bra', qty: 2),
+    SeedItem('Strapless or convertible bra'),
+    SeedItem('Socks', qty: 6),
   ]),
   SeedCategory('Toiletries & Skincare', '🧴', [
-    SeedItem('SPF 50 sunscreen', tag: 'Both'),
-    SeedItem('SPF lip balm', tag: 'Both'),
-    SeedItem('Travel-size skincare routine', tag: 'Both'),
-    SeedItem('Foundation', tag: 'Both'),
-    SeedItem('Full makeup essentials kit', tag: 'Both'),
-    SeedItem('Travel toiletries kit', tag: 'Both'),
+    SeedItem('SPF 50 sunscreen'),
+    SeedItem('SPF lip balm'),
+    SeedItem('Travel-size skincare routine'),
+    SeedItem('Foundation'),
+    SeedItem('Full makeup essentials kit'),
+    SeedItem('Travel toiletries kit'),
   ]),
   SeedCategory('Electronics & Extras', '🔌', [
-    SeedItem('Phone charger', tag: 'Both'),
-    SeedItem('Laptop + charger', tag: 'SF'),
-    SeedItem('Dyson Airwrap — carry-on only', tag: 'Both'),
-    SeedItem('Earbuds / headphones', tag: 'Both'),
-    SeedItem('Portable power bank', tag: 'Both'),
-    SeedItem('Books or e-reader', tag: 'Both'),
-    SeedItem('Reusable water bottle', tag: 'Both'),
-    SeedItem('Small first-aid kit', tag: 'Both'),
-    SeedItem('Road trip snacks', tag: 'LA'),
+    SeedItem('Phone charger'),
+    SeedItem('Laptop + charger'),
+    SeedItem('Dyson Airwrap — carry-on only'),
+    SeedItem('Earbuds / headphones'),
+    SeedItem('Portable power bank'),
+    SeedItem('Books or e-reader'),
+    SeedItem('Reusable water bottle'),
+    SeedItem('Small first-aid kit'),
+    SeedItem('Road trip snacks'),
   ]),
 ];

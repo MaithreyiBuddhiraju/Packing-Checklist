@@ -24,5 +24,5 @@ Personal packing checklist. Two apps:
 ## Constraints
 
 - V1 scope is deliberately narrow: single active checklist + one unnamed template. No multiple trips, no sync, no iOS, no export, no notifications.
-- Item `tag` is freeform user-editable text (seeded with SF/LA/Both from the legacy app) — display + edit only, no filtering in V1.
+- Item `tag` is freeform user-editable text — display + edit only, no filtering in V1. Seed data ships untagged (DB v2 migration cleared the legacy SF/LA/Both tags); tap the pill or long-press the item to edit.
 - "Template" stores structure (categories, items, quantities, tags) but never packed state.

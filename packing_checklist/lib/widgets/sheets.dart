@@ -65,7 +65,7 @@ Future<void> showItemSheet(BuildContext context, Category category,
                       textCapitalization: TextCapitalization.characters,
                       decoration: const InputDecoration(
                         labelText: 'Tag (optional)',
-                        hintText: 'e.g. SF, LA, Both',
+                        hintText: 'e.g. Carry-on, Beach',
                         border: OutlineInputBorder(),
                       ),
                       onSubmitted: (_) => submit(),

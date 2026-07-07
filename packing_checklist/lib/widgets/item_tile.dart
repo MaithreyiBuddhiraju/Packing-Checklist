@@ -78,7 +78,13 @@ class ItemTile extends StatelessWidget {
                     ),
                     if (item.tag != null) ...[
                       const SizedBox(height: 3),
-                      TagBadge(item.tag!),
+                      // Tap the pill to edit/remove the tag without hunting
+                      // for the long-press edit sheet.
+                      GestureDetector(
+                        onTap: () =>
+                            showItemSheet(context, category, item: item),
+                        child: TagBadge(item.tag!),
+                      ),
                     ],
                   ],
                 ),

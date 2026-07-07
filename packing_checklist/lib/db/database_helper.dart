@@ -17,10 +17,18 @@ class DatabaseHelper {
     final path = join(await getDatabasesPath(), 'packing_checklist.db');
     return openDatabase(
       path,
-      version: 1,
+      version: 2,
       // sqflite ships with foreign keys OFF; cascade deletes depend on this.
       onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
       onCreate: _onCreate,
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          // v1 seeded trip-specific SF/LA/Both tags; clear them everywhere.
+          const where = "tag IN ('SF', 'LA', 'Both')";
+          await db.update('items', {'tag': null}, where: where);
+          await db.update('template_items', {'tag': null}, where: where);
+        }
+      },
     );
   }
 
